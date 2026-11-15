@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tic Tac Toe vs Robot</title>
+
+<style>
+body {
+  background: #101827;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 25px;
+}
+
+h1 { color: #8b7cff; }
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-size: 18px;
+}
+
+.choice {
+  background: #30415c;
+  color: white;
+  margin: 5px;
+}
+
+.choice.selected {
+  background: #8b7cff;
+}
+
+#board {
+  display: grid;
+  grid-template-columns: repeat(3, 95px);
+  gap: 9px;
+  justify-content: center;
+  margin: 25px auto;
+}
+
+.cell {
+  width: 95px;
+  height: 95px;
+  background: #24344d;
+  color: white;
+  font-size: 42px;
+  font-weight: bold;
+}
+
+.cell.x { color: #62d6ff; }
+.cell.o { color: #ffbd69; }
+
+#restart {
+  background: #8b7cff;
+  color: white;
+}
+
+#status {
+  min-height: 28px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>TIC TAC TOE 🤖</h1>
+
+<h3>Choose your symbol:</h3>
+
+<button class="choice selected" id="pickX">X</button>
+<button class="choice" id="pickO">O</button>
+
+<h2 id="status">Your turn — X</h2>
+
+<div id="board">
+  <button class="cell"></button>
+  <button class="cell"></button>
+  <button class="cell"></button>
+  <button class="cell"></button>
+  <button class="cell"></button>
+  <button class="cell"></button>
+  <button class="cell"></button>
+  <button class="cell"></button>
+  <button class="cell"></button>
+</div>
+
+<h3 id="score">YOU: 0 | DRAWS: 0 | ROBOT: 0</h3>
+
+<button id="restart">New Game ↻</button>
+
+<script>
+const cells = [...document.querySelectorAll(".cell")];
+
+let human = "X";
+let robot = "O";
+let board = Array(9).fill("");
+let gameOver = false;
+let thinking = false;
+
+let scores = {
+  you: 0,
+  robot: 0,
+  draws: 0
+};
+
+const wins = [
+  [0,1,2], [3,4,5], [6,7,8],
+  [0,3,6], [1,4,7], [2,5,8],
+  [0,4,8], [2,4,6]
+];
+
+function render() {
+  cells.forEach((cell, i) => {
+    cell.textContent = board[i];
+    cell.className = "cell " + board[i].toLowerCase();
+    cell.disabled = !!board[i] || gameOver || thinking;
+  });
+}
+
+function checkWinner(player) {
+  return wins.find(combo =>
+    combo.every(i => board[i] === player)
+  );
+}
+
+function updateScore() {
+  document.getElementById("score").textContent =
+    `YOU: ${scores.you} | DRAWS: ${scores.draws} | ROBOT: ${scores.robot}`;
+}
+
+function finish(player) {
+  gameOver = true;
+
+  if (player === human) {
+    scores.you++;
+    document.getElementById("status").textContent = "YOU WIN! 🎉";
+  } else if (player === robot) {
+    scores.robot++;
+    document.getElementById("status").textContent = "ROBOT WINS! 🤖";
+  } else {
+    scores.draws++;
+    document.getElementById("status").textContent = "IT'S A DRAW!";
+  }
+
+  updateScore();
+  render();
+}
+
+function robotMove() {
+  thinking = false;
+
+  const available = board
+    .map((v, i) => v === "" ? i : null)
+    .filter(v => v !== null);
+
+  if (!available.length) {
+    finish("draw");
+    return;
+  }
+
+  const move = available[
+    Math.floor(Math.random() * available.length)
+  ];
+
+  board[move] = robot;
+
+  if (checkWinner(robot)) {
+    finish(robot);
+  } else if (board.every(Boolean)) {
+    finish("draw");
+  } else {
+    document.getElementById("status").textContent =
+      "Your turn — " + human;
+    render();
+  }
+}
+
+function playerMove(index) {
+  if (board[index] || gameOver || thinking) return;
+
+  board[index] = human;
+
+  if (checkWinner(human)) {
+    finish(human);
+    return;
+  }
+
+  if (board.every(Boolean)) {
+    finish("draw");
+    return;
+  }
+
+  thinking = true;
+  document.getElementById("status").textContent =
+    "Robot is thinking... 🤖";
+
+  render();
+
+  setTimeout(robotMove, 450);
+}
+
+cells.forEach((cell, i) => {
+  cell.addEventListener("click", () => playerMove(i));
+});
+
+function newGame() {
+  board = Array(9).fill("");
+  gameOver = false;
+  thinking = false;
+
+  document.getElementById("status").textContent =
+    "Your turn — " + human;
+
+  render();
+}
+
+document.getElementById("pickX").onclick = () => {
+  human = "X";
+  robot = "O";
+
+  document.getElementById("pickX").classList.add("selected");
+  document.getElementById("pickO").classList.remove("selected");
+
+  newGame();
+};
+
+document.getElementById("pickO").onclick = () => {
+  human = "O";
+  robot = "X";
+
+  document.getElementById("pickO").classList.add("selected");
+  document.getElementById("pickX").classList.remove("selected");
+
+  newGame();
+};
+
+document.getElementById("restart").onclick = newGame;
+
+render();
+</script>
+
+</body>
+</html>
